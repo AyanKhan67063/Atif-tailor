@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AF Tailor</title>
+  <style>
+    body {
+      font-family: 'Noto Nastaliq Urdu', serif;
+      background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+      margin: 0;
+      padding: 20px;
+      font-size: 17px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      color: #1a5d1a;
+      margin-bottom: 20px;
+    }
+    form {
+      max-width: 980px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .group > div {
+      flex: 1 1 46%;
+    }
+    label {
+      font-size: 16px;
+      font-weight: bold;
+      display: block;
+      margin-bottom: 3px;
+    }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    } .tick-options {
+      background: #fdf6e3;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(45%, 1fr));
+      gap: 10px;
+    }
+
+    .tick-options label {
+      background: #e3f2fd;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tick-options label:hover {
+      background-color: #b3e5fc;
+    }
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 10px;
+    }
+    button {
+      padding: 9px 9px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .save { background: #2e7d32; color: white; }
+    .search { background: #1565c0; color: white; }
+    .slip { background: #ffb300; color: black; }
+    .clear-btn {
+      background: #c62828;
+      color: white;
+      margin: 25px auto 0;
+      display: block;
+    }
+    #slipContainer {
+      display: none;
+      max-width: 400px;
+      margin: 30px auto;
+      background: #ffffff;
+      padding: 20px 25px;
+      border: 2px solid #4caf50;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      font-family: 'Georgia', serif;
+    }
+    #slipContainer h2 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #1b5e20;
+      font-size: 22px;
+      border-bottom: 1px dashed #aaa;
+      padding-bottom: 8px;
+    }
+    #slipContainer p {
+      font-size: 15px;
+      margin: 6px 0;
+    }
+    #slipContainer table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 15px;
+    }
+    #slipContainer td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: right;
+    }
+    #slipContainer tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    #slipContainer .footer {
+      text-align: center;
+      font-weight: bold;
+      font-size: 13px;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+      color: #444;
+    }
+    #customerList {
+      display: none;
+      max-width: 600px;
+      margin: 20px auto;
+      background: #fffde7;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    #customerList ul {
+      list-style: none;
+      padding: 0;
+    }
+    #customerList li {
+      padding: 6px;
+      border-bottom: 1px solid #ccc;
+    }
+    @media print {
+      body *:not(#slipContainer):not(#slipContainer *) {
+        display: none;
+      }
+      #slipContainer {
+        display: block;
+        width: 380px;
+        margin: 0 auto;
+      }
+    }
+  </style>
+</head>
+<body onload="initialize()">
+
+<!-- Mini buttons -->
+<div style="position: fixed; top: 10px; left: 10px;">
+  <button onclick="showCustomerList()">📋</button>
+</div>
+<div style="position: fixed; top: 10px; right: 10px;">
+  <button onclick="copyBackup()">C</button>
+  <button onclick="pasteBackup()">P</button>
+</div>
+
+<h1>AF Tailor کسٹمر مینجمنٹ سسٹم</h1>
+<form id="tailorForm">
+  <div class="group">
+    <div><label>سیریل نمبر</label><input type="text" id="serial"></div>
+    <div><label>نام</label><input type="text" id="name"></div>
+    <div><label>پتہ</label><input type="text" id="address"></div>
+    <div><label>موبائل</label><input type="text" id="mobile"></div>
+    <div><label>تاریخ</label><input type="date" id="date" readonly></div>
+  </div>
+  <div class="group" id="measurementFields"></div>
+  <div class="tick-options" id="tickBoxes"></div>
+  <div class="buttons">
+    <button type="button" class="save" onclick="saveCustomer()">Save</button>
+    <button type="button" class="search" onclick="searchCustomer()">Search</button>
+    <button type="button" class="slip" onclick="generateSlip()">Generate Slip</button>
+    <button type="button" class="clear-btn" onclick="clearData()">Clear All Data</button>
+  </div>
+</form>
+
+<div id="slipContainer"></div>
+<div id="customerList">
+  <ul id="customerListContent"></ul>
+</div>
+
+<script>
+const measurements = ["قميص","تیرہ","آستين","گلا","چهاتی","چھوڑائی","دامن","شلوار","پانچہ","کالر","ہاف بین گول","ہاف بین چورس","شیروانی","سامنے جیب","سائیڈ جیب","کف گول","کف چورس","کف کونا کٹ","سٹڈ کف","سادہ بازوں بکرم","سادہ بازوں کنی","پٹی سائز","سادہ پنی","پٹی کاج","موڑا","شلوار 6 درز","شلوار 2 درز","شلوار فيٹ"];
+const styles = ["دامن گول","دامن چورس","کف پلیٹ","لیبل","چاک پٹی فیٹ","چاک پٹی کاج","کف ڈبل کاج","سٹڈ کاج","شلوار جيب","سادہ سلائی","ڈبل سلائی","سلائی چمکتار","بٹن میٹل","رنگ بٹن","سپرٹ پٹی","اندر جیب","کالر فرنج","کالر گول نوک"];
+let customers = JSON.parse(localStorage.getItem("af_customers") || "[]");
+
+function initialize() {
+  document.getElementById("date").value = new Date().toISOString().split("T")[0];
+  const mDiv = document.getElementById("measurementFields");
+  measurements.forEach(m => {
+    const d = document.createElement("div");
+    d.innerHTML = `<label>${m}</label><input type="text" id="${m}">`;
+    mDiv.appendChild(d);
+  });
+  const tDiv = document.getElementById("tickBoxes");
+  styles.forEach(s => {
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" id="tick_${s}"> ${s}`;
+    tDiv.appendChild(label);
+  });
+}
+
+function getVal(id) {
+  return document.getElementById(id).value.trim();
+}
+
+function getCustomerData() {
+  const data = {
+    serial: getVal("serial"),
+    name: getVal("name"),
+    address: getVal("address"),
+    mobile: getVal("mobile"),
+    date: getVal("date"),
+    measurements: {},
+    styles: []
+  };
+  measurements.forEach(f => data.measurements[f] = getVal(f));
+  styles.forEach(s => {
+    if (document.getElementById("tick_" + s).checked)
+      data.styles.push(s);
+  });
+  return data;
+}
+
+function saveCustomer() {
+  const d = getCustomerData();
+  if (!d.serial || !d.name) return alert("سیریل نمبر اور نام ضروری ہیں!");
+  customers = customers.filter(c => c.serial !== d.serial);
+  customers.push(d);
+  localStorage.setItem("af_customers", JSON.stringify(customers));
+  alert("کسٹمر کا ڈیٹا کامیابی سے محفوظ ہو گیا!");
+  document.getElementById("tailorForm").reset();
+  document.getElementById("date").value = new Date().toISOString().split("T")[0];
+}
+
+function searchCustomer() {
+  const key = getVal("serial") || getVal("name");
+  const c = customers.find(c => c.serial === key || c.name === key);
+  if (!c) return alert("کسٹمر نہیں ملا!");
+  document.getElementById("name").value = c.name;
+  document.getElementById("address").value = c.address;
+  document.getElementById("mobile").value = c.mobile;
+  document.getElementById("date").value = c.date;
+  measurements.forEach(f => document.getElementById(f).value = c.measurements[f] || "");
+  styles.forEach(s => document.getElementById("tick_" + s).checked = c.styles.includes(s));
+  alert("کسٹمر ڈیٹا لوڈ ہو گیا!");
+}
+
+function generateSlip() {
+  const d = getCustomerData();
+  let html = `<h2>AF Tailor Receipt</h2>`;
+  html += `<p><strong>نام:</strong> ${d.name}</p>`;
+  html += `<p><strong>موبائل:</strong> ${d.mobile}</p>`;
+  html += `<p><strong>پتہ:</strong> ${d.address}</p>`;
+  html += `<p><strong>تاریخ:</strong> ${d.date}</p>`;
+  html += `<table>`;
+  for (let k in d.measurements) {
+    if (d.measurements[k])
+      html += `<tr><td>${k}</td><td>${d.measurements[k]}</td></tr>`;
+  }
+  if (d.styles.length)
+    html += `<tr><td colspan="2"><strong>ڈیزائنز:</strong> ${d.styles.join(", ")}</td></tr>`;
+  html += `</table>`;
+  html += `<div class="footer">مین جی ٹی روڈ، کنڈ پارک<br>تحصیل جہانگیرہ، ضلع نوشہرہ<br>موبائل: ABC</div>`;
+  document.getElementById("slipContainer").innerHTML = html;
+  document.getElementById("slipContainer").style.display = "block";
+  alert("سلپ تیار ہو گئی ہے!");
+}
+
+function clearData() {
+  const pass = prompt("تمام ڈیٹا ختم کرنے کے لیے پاسورڈ درج کریں:");
+  if (pass === "67063") {
+    localStorage.removeItem("af_customers");
+    alert("تمام کسٹمر ڈیٹا صاف ہو گیا!");
+    location.reload();
+  } else {
+    alert("غلط پاسورڈ!");
+  }
+}
+
+function copyBackup() {
+  navigator.clipboard.writeText(JSON.stringify(customers)).then(() => {
+    alert("ڈیٹا کلپ بورڈ میں کاپی ہو گیا ہے!");
+  });
+}
+
+function pasteBackup() {
+  navigator.clipboard.readText().then(text => {
+    try {
+      customers = JSON.parse(text);
+      localStorage.setItem("af_customers", JSON.stringify(customers));
+      alert("ڈیٹا بحال ہو گیا ہے!");
+    } catch {
+      alert("غلط یا خراب ڈیٹا!");
+    }
+  });
+}
+
+function showCustomerList() {
+  let content = "";
+  customers.forEach(c => {
+    content += `<li><strong>${c.serial}</strong> - ${c.name}</li>`;
+  });
+  document.getElementById("customerListContent").innerHTML = content || "<li>کوئی ڈیٹا نہیں!</li>";
+  document.getElementById("customerList").style.display = "block";
+}
+</script>
+</body>
+</html>
